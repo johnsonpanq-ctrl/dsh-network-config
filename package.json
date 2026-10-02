@@ -1,0 +1,62 @@
+{
+  "name": "dsh-network-config",
+  "version": "1.0.0",
+  "description": "Proxy mode for DeepSeek Harness: follow the system proxy, connect directly, or point at your own proxy — from Settings, applied live.",
+  "license": "MIT",
+  "author": "",
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "proxy",
+    "http-proxy",
+    "no-proxy",
+    "clash",
+    "v2ray"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/dsh-network-config.git"
+  },
+  "bugs": {
+    "url": "https://github.com/OWNER/dsh-network-config/issues"
+  },
+  "homepage": "https://github.com/OWNER/dsh-network-config#readme",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "test": "node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    },
+    "manifestVersion": 1
+  }
+}

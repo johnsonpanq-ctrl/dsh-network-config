@@ -1,0 +1,15 @@
+# Normalize line endings in the repository, and check out native ones.
+#
+# Without this, a Windows checkout turns LF into CRLF and every diff becomes a
+# whole-file rewrite for anyone on Linux or macOS.
+* text=auto eol=lf
+
+# PowerShell scripts must keep CRLF: Windows PowerShell 5.1 mis-parses
+# LF-only scripts in some edge cases, and this repository's scripts are the
+# part a Windows user runs directly.
+*.ps1 text eol=crlf
+
+# Binary
+*.zip binary
+*.png binary
+*.ico binary
