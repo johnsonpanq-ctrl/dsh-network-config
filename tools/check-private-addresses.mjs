@@ -22,10 +22,11 @@
 //   plus a handful of public addresses used as deliberate negatives.
 //
 // This does NOT mean an address from a private range is always fine to publish:
-// 172.20.0.10 still names one specific machine on one specific LAN. The point
-// of this check is narrower — catch a routable public address, and catch the
-// private address of the author's own network appearing with its real port. The
-// examples use the boring members of the ranges (100.64.0.10, 172.20.0.10).
+// one specific host address under 192.168/16 still names one machine on one LAN,
+// and that is exactly what leaked here the first time. The point of this check is
+// narrower — catch a routable public address, and catch the author's own host
+// address appearing with its real port. The examples use the boring members of
+// the ranges (100.64.0.10, 172.20.0.10).
 //
 // Usage: node tools/check-private-addresses.mjs
 import { execFileSync } from 'node:child_process'
