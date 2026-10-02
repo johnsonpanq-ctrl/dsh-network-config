@@ -31,9 +31,15 @@ window.__ModuleLoader__.load({
 			bypass: "不走代理的地址",
 			bypassHint: "逗号分隔。支持域名与子域（example.com 也匹配 api.example.com）、192.168.* 这类通配、10.0.0.0/8 这类网段，以及 <local>。留空表示只用下面的自动规则。",
 			privateDirect: "内网直连",
-			privateDirectValue: "本机、局域网、链路本地与运营商级 NAT 地址始终不走代理（转发代理到不了它们）",
+			privateDirectValue: "本机、局域网、链路本地与运营商级 NAT 地址不走代理",
 			invalidProxy: "请填写合法的 http:// 或 https:// 代理地址。",
-			sectionCurrent: "当前生效",
+			statusTitle: "当前状态",
+			statusActive: "代理已生效",
+			statusDirect: "当前为直连",
+			statusFailed: "网络策略未能安装",
+			statusPending: "尚未安装",
+			statusActiveHint: "以下请求都经由这个代理发出",
+			statusDirectHint: "所有请求都直接连接，不使用代理",
 			sectionSystem: "系统代理",
 			sectionDiagnostics: "提示",
 			systemEnabled: "已启用",
@@ -45,6 +51,9 @@ window.__ModuleLoader__.load({
 			routeUnknown: "尚未安装",
 			routeNoProxy: "不使用代理",
 			bypassValue: "绕过列表",
+			bypassCount: (n) => n + " 条规则",
+			bypassEmpty: "无自定义规则",
+			refresh: "重新读取",
 			saved: "已保存并立即生效",
 			save: "保存",
 			saving: "保存中…",
@@ -76,9 +85,15 @@ window.__ModuleLoader__.load({
 			bypass: "Bypass list",
 			bypassHint: "Comma separated. A host also matches its subdomains (example.com matches api.example.com); wildcards (192.168.*), CIDR (10.0.0.0/8) and <local> are supported. Leave blank to rely on the automatic rule below.",
 			privateDirect: "Private stays direct",
-			privateDirectValue: "Loopback, LAN, link-local and carrier-grade NAT addresses never go through the proxy (a forward proxy cannot reach them)",
+			privateDirectValue: "Loopback, LAN, link-local and carrier-grade NAT addresses skip the proxy",
 			invalidProxy: "Enter a valid http:// or https:// proxy URL.",
-			sectionCurrent: "In effect",
+			statusTitle: "Status",
+			statusActive: "Proxy in effect",
+			statusDirect: "Connecting directly",
+			statusFailed: "The network policy could not be installed",
+			statusPending: "Not installed yet",
+			statusActiveHint: "Every request goes through this proxy",
+			statusDirectHint: "Every request connects directly; no proxy is used",
 			sectionSystem: "System proxy",
 			sectionDiagnostics: "Notes",
 			systemEnabled: "Enabled",
@@ -90,6 +105,9 @@ window.__ModuleLoader__.load({
 			routeUnknown: "Not installed yet",
 			routeNoProxy: "No proxy",
 			bypassValue: "Bypass list",
+			bypassCount: (n) => (n === 1 ? "1 rule" : n + " rules"),
+			bypassEmpty: "No custom rules",
+			refresh: "Refresh",
 			saved: "Saved and applied",
 			save: "Save",
 			saving: "Saving…",
@@ -199,25 +217,127 @@ window.__ModuleLoader__.load({
 
 		/** Shorthand for one inline style object. */
 		const S = {
-			description: { margin: "0 0 18px", color: "var(--dsw-alias-label-secondary)", fontSize: 13, lineHeight: "20px" },
-			field: { marginBottom: 16 },
-			fieldLabel: { display: "block", marginBottom: 8, color: "var(--dsw-alias-label-primary)", fontSize: 13, fontWeight: 500 },
-			hint: { margin: "8px 0 0", color: "var(--dsw-alias-label-secondary)", fontSize: 12, lineHeight: "18px" },
-			panel: {
-				marginTop: 4,
-				padding: "12px 14px",
-				border: "1px solid var(--dsw-alias-border-l1)",
-				borderRadius: 12,
-				background: "var(--dsw-alias-bg-layer-2)",
+			description: {
+				margin: "0 0 20px",
+				color: "var(--dsw-alias-label-secondary)",
+				fontSize: 13,
+				lineHeight: "20px",
 			},
-			row: { display: "flex", gap: 8, fontSize: 12, lineHeight: "20px" },
-			rowLabel: { flex: "0 0 84px", color: "var(--dsw-alias-label-secondary)" },
-			rowValue: { flex: "1 1 auto", color: "var(--dsw-alias-label-primary)", wordBreak: "break-all" },
-			list: { margin: "8px 0 0", paddingLeft: 18, color: "var(--dsw-alias-state-warn-primary)", fontSize: 12, lineHeight: "18px" },
-			error: { margin: "8px 0 0", color: "var(--dsw-alias-state-error-primary)", fontSize: 12, lineHeight: "18px" },
-			success: { margin: "8px 0 0", color: "var(--dsw-alias-state-success-primary)", fontSize: 12, lineHeight: "18px" },
-			actions: { display: "flex", gap: 8, alignItems: "center", marginTop: 12 },
+			// One labelled control, matching the geometry the shared settings
+			// fields use (label above, control below, hint last).
+			field: { display: "flex", flexDirection: "column", gap: 8, paddingBottom: 16 },
+			fieldLabel: { fontSize: 13, fontWeight: 500, lineHeight: "1.5", color: "var(--dsw-alias-label-primary)" },
+			hint: { margin: 0, fontSize: 12, lineHeight: "1.6", color: "var(--dsw-alias-label-tertiary)" },
+
+			// The status surface: one raised card, a status line, then the facts.
+			card: {
+				marginTop: 4,
+				border: "0.5px solid var(--dsw-alias-border-l2)",
+				borderRadius: 12,
+				background: "var(--dsw-alias-settings-card-fill, var(--dsw-alias-bg-layer-2))",
+				overflow: "hidden",
+			},
+			cardHead: {
+				display: "flex",
+				alignItems: "center",
+				gap: 10,
+				padding: "14px 16px",
+			},
+			cardTitle: { flex: "1 1 auto", minWidth: 0, fontSize: 13, fontWeight: 500, color: "var(--dsw-alias-label-primary)" },
+			cardBody: {
+				display: "grid",
+				gridTemplateColumns: "minmax(96px, auto) minmax(0, 1fr)",
+				columnGap: 20,
+				rowGap: 10,
+				padding: "14px 16px",
+				borderTop: "0.5px solid var(--dsw-alias-border-l2)",
+				background: "var(--dsw-alias-bg-layer-1)",
+			},
+			dt: { fontSize: 12, lineHeight: "18px", color: "var(--dsw-alias-label-tertiary)" },
+			dd: { margin: 0, fontSize: 12, lineHeight: "18px", color: "var(--dsw-alias-label-primary)", wordBreak: "break-word" },
+			mono: {
+				fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+				fontSize: 12,
+				lineHeight: "18px",
+			},
+			// A long list must not become a wall: it scrolls on its own axis.
+			listScroll: { maxHeight: 76, overflowY: "auto", margin: 0, padding: 0, listStyle: "none" },
+			listItem: { padding: "1px 0" },
+
+			notes: {
+				margin: 0,
+				padding: "0 16px 14px",
+				listStyle: "none",
+				background: "var(--dsw-alias-bg-layer-1)",
+			},
+			noteRow: {
+				display: "flex",
+				gap: 8,
+				alignItems: "flex-start",
+				paddingTop: 8,
+				fontSize: 12,
+				lineHeight: "18px",
+				color: "var(--dsw-alias-state-warn-label, var(--dsw-alias-state-warn-primary))",
+			},
+			noteIcon: { flex: "none", marginTop: 2 },
+			cardFoot: {
+				display: "flex",
+				alignItems: "center",
+				gap: 10,
+				padding: "12px 16px",
+				borderTop: "0.5px solid var(--dsw-alias-border-l2)",
+				background: "var(--dsw-alias-bg-layer-1)",
+			},
+			probeOk: { fontSize: 12, lineHeight: "18px", color: "var(--dsw-alias-state-success-primary)" },
+			probeBad: { fontSize: 12, lineHeight: "18px", color: "var(--dsw-alias-state-error-primary)" },
+			error: { margin: "8px 0 0", fontSize: 12, lineHeight: "18px", color: "var(--dsw-alias-state-error-primary)" },
+			success: { margin: "0", fontSize: 12, lineHeight: "18px", color: "var(--dsw-alias-state-success-primary)" },
+			emptyState: { display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" },
 		};
+
+		/**
+		 * The colour of the dot beside the status line: green when traffic is
+		 * flowing, grey when nothing is proxied, red when the install failed.
+		 * @param applied - the host's applied policy, or null.
+		 * @param lastError - the host's last install error, or null.
+		 * @returns a CSS colour.
+		 */
+		function statusColor(applied, lastError) {
+			if (lastError) return "var(--dsw-alias-state-error-primary)";
+			if (applied === null || applied === undefined || applied.direct) return "var(--dsw-alias-state-idle-primary)";
+			return "var(--dsw-alias-state-success-primary)";
+		}
+
+		/** A 8px status dot, matching StatusDot's colour vocabulary. */
+		function StatusDot(props) {
+			return h("span", {
+				"aria-hidden": "true",
+				style: {
+					flex: "none",
+					width: 8,
+					height: 8,
+					borderRadius: "50%",
+					background: props.color,
+					boxShadow: props.color === "var(--dsw-alias-state-idle-primary)" ? "none" : "0 0 0 3px color-mix(in srgb, " + props.color + " 16%, transparent)",
+				},
+			});
+		}
+
+		/**
+		 * One label/value pair of the status grid.
+		 *
+		 * Returns the two halves as a fragment-like array; the caller spreads
+		 * them into the grid, which is what lets CSS keep the columns aligned
+		 * across rows (a `<div>` wrapper per row would need a subgrid).
+		 *
+		 * @param props - the term, its value, and whether the value is monospaced.
+		 * @returns the `<dt>`/`<dd>` pair.
+		 */
+		function Fact(props) {
+			return h(React.Fragment, null,
+				h("dt", { style: S.dt }, props.term),
+				h("dd", { style: props.mono ? Object.assign({}, S.dd, S.mono) : S.dd }, props.children));
+		}
 
 		/**
 		 * Render one state of the Settings → Network page.
@@ -235,11 +355,10 @@ window.__ModuleLoader__.load({
 				return h("p", { style: S.description, role: "status" }, t.loading);
 			}
 			if (view.phase === "error" || view.remote === null || view.draft === null) {
-				return h("div", null,
+				return h("div", { style: S.emptyState },
 					h("p", { style: S.error, role: "status" },
 						t.loadFailed + (view.notice ? " " + view.notice : "")),
-					h("div", { style: S.actions },
-						h(primitives.Button, { variant: "outline", size: "sm", onClick: view.actions.load }, t.retry)));
+					h(primitives.Button, { variant: "outline", size: "sm", onClick: view.actions.load }, t.retry));
 			}
 
 			const remote = view.remote;
@@ -248,39 +367,53 @@ window.__ModuleLoader__.load({
 			const invalid = draft.mode === "custom" && !isProxyUrl(draft.custom.proxy);
 			const dirty = isDirty(draft, remote.config);
 
-			const rows = [
-				h("div", { style: S.row, key: "route" },
-					h("span", { style: S.rowLabel }, t.sectionCurrent),
-					h("span", { style: S.rowValue }, routeText(t, applied))),
-			];
-
-			if (draft.mode === "system") {
-				rows.push(h("div", { style: S.row, key: "system" },
-					h("span", { style: S.rowLabel }, t.sectionSystem),
-					h("span", { style: S.rowValue }, systemText(t, remote.system))));
-				if (remote.system !== null && remote.system !== undefined && remote.system.pac) {
-					rows.push(h("div", { style: S.row, key: "pac" },
-						h("span", { style: S.rowLabel }, ""),
-						h("span", { style: S.rowValue }, t.pacDetected + " · " + remote.system.pac)));
-				}
-			}
-
-			if (applied !== null && applied !== undefined && !applied.direct) {
-				rows.push(h("div", { style: S.row, key: "noProxy" },
-					h("span", { style: S.rowLabel }, t.bypassValue),
-					h("span", { style: S.rowValue }, applied.noProxy ? applied.noProxy : t.routeNoProxy)));
-				rows.push(h("div", { style: S.row, key: "private" },
-					h("span", { style: S.rowLabel }, t.privateDirect),
-					h("span", { style: S.rowValue }, t.privateDirectValue)));
-			}
-
 			const notes = (remote.diagnostics || []).slice();
 			if (remote.lastError) notes.push(remote.lastError);
+
+			// The status line answers "is it working right now" in one glance;
+			// the grid below it holds the detail for whoever wants it.
+			const failed = Boolean(remote.lastError);
+			const direct = applied === null || applied === undefined || applied.direct;
+			const statusText = failed
+				? t.statusFailed
+				: applied === null || applied === undefined
+					? t.statusPending
+					: applied.direct ? t.statusDirect : t.statusActive;
+			const statusHint = failed
+				? null
+				: applied === null || applied === undefined
+					? null
+					: applied.direct ? t.statusDirectHint : t.statusActiveHint;
+
+			const facts = [];
+			if (!failed && applied !== null && applied !== undefined) {
+				if (!applied.direct) {
+					facts.push(h(Fact, { key: "route", term: t.modeLabel, mono: true }, routeText(t, applied)));
+				}
+				if (draft.mode === "system") {
+					facts.push(h(Fact, { key: "system", term: t.sectionSystem }, systemText(t, remote.system)));
+					if (remote.system !== null && remote.system !== undefined && remote.system.pac) {
+						facts.push(h(Fact, { key: "pac", term: "", mono: true }, t.pacDetected + " · " + remote.system.pac));
+					}
+				}
+				// The bypass list is the densest thing on the page, so it gets a
+				// count plus its own scroll area instead of wrapped prose.
+				const entries = (applied.noProxy || "").split(",").map((part) => part.trim()).filter(Boolean);
+				facts.push(h(Fact, { key: "bypass", term: t.bypassValue },
+					h("span", null, entries.length === 0 ? t.bypassEmpty : t.bypassCount(entries.length))));
+				facts.push(h(Fact, { key: "private", term: t.privateDirect }, t.privateDirectValue));
+			}
+
+			const probeText = view.probe === null
+				? null
+				: view.probe.ok
+					? t.testOk + " · HTTP " + view.probe.status + " · " + view.probe.ms + " ms"
+					: t.testFail + " · " + (view.probe.error || "");
 
 			const children = [
 				h("p", { style: S.description, key: "description" }, t.description),
 				h("div", { style: S.field, key: "mode" },
-					h("span", { style: S.fieldLabel }, t.modeLabel),
+					h("span", { style: S.fieldLabel, id: "dsh-network-mode-label" }, t.modeLabel),
 					h(primitives.SegmentedControl, {
 						id: "dsh-network-mode",
 						label: t.modeLabel,
@@ -327,18 +460,33 @@ window.__ModuleLoader__.load({
 				}));
 			}
 
-			const probeText = view.probe === null
-				? null
-				: view.probe.ok
-					? t.testOk + " · HTTP " + view.probe.status + " · " + view.probe.ms + " ms"
-					: t.testFail + " · " + (view.probe.error || "");
+			children.push(h("section", { style: S.card, key: "status", "aria-label": t.statusTitle },
+				h("div", { style: S.cardHead, role: "status" },
+					h(StatusDot, { color: statusColor(applied, remote.lastError) }),
+					h("span", { style: S.cardTitle }, statusText),
+					applied === null || applied === undefined || failed
+						? null
+						: h(primitives.Button, {
+							variant: "ghost",
+							size: "sm",
+							onClick: view.actions.load,
+							title: t.refresh,
+						}, t.refresh)),
 
-			children.push(h("div", { style: S.panel, key: "status" },
-				rows,
+				facts.length > 0 ? h("dl", { style: S.cardBody }, facts) : null,
+
 				notes.length > 0
-					? h("ul", { style: S.list }, notes.map((note, index) => h("li", { key: index }, note)))
+					? h("ul", { style: S.notes },
+						notes.map((note, index) => h("li", { style: S.noteRow, key: index },
+							h("span", { style: S.noteIcon }, h(primitives.IconInfoOutlineRegular, { size: 12 })),
+							h("span", null, note))))
 					: null,
-				h("div", { style: S.actions },
+
+				statusHint !== null
+					? h("p", { style: Object.assign({}, S.hint, { padding: "0 16px 14px" }) }, statusHint)
+					: null,
+
+				h("div", { style: S.cardFoot },
 					h(primitives.Button, {
 						variant: "outline",
 						size: "sm",
@@ -347,10 +495,10 @@ window.__ModuleLoader__.load({
 					}, view.probing ? t.testing : t.test),
 					probeText === null
 						? null
-						: h("span", { style: view.probe.ok ? S.success : S.error }, probeText)),
-				view.notice === null
-					? null
-					: h("p", { style: view.failed ? S.error : S.success }, view.notice)));
+						: h("span", { style: view.probe.ok ? S.probeOk : S.probeBad }, probeText),
+					view.notice === null
+						? null
+						: h("span", { style: view.failed ? S.probeBad : S.probeOk }, view.notice))));
 
 			return h(primitives.SettingsForm, {
 				labels: {

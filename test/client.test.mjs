@@ -222,9 +222,16 @@ test('the follow-system page shows the mode control and the resolved route', () 
   assert.deepEqual(plain(segmented.props.options).map((option) => option.value), ['system', 'direct', 'custom'])
 
   const text = JSON.stringify(tree)
-  assert.match(text, /当前生效/)
+  assert.match(text, /代理已生效/)
   assert.match(text, /127\.0\.0\.1:7897/)
   assert.equal(findAll(tree, 'SettingsValueField').length, 0)
+
+  // The status surface is a card whose facts are a definition grid, so the
+  // label/value pairs keep their columns instead of wrapping into prose.
+  const card = find(tree, 'section')
+  assert.equal(card.props['aria-label'], '当前状态')
+  const grid = find(tree, 'dl')
+  assert.match(grid.props.style.gridTemplateColumns, /minmax/)
 })
 
 test('the custom page exposes the proxy and bypass fields and blocks a bad URL', () => {
@@ -256,10 +263,47 @@ test('the page surfaces diagnostics, a probe result, and the direct route', () =
     probe: { ok: true, status: 200, ms: 42 },
   }))
   const text = JSON.stringify(tree)
-  assert.match(text, /直连/)
+  assert.match(text, /当前为直连/)
   assert.match(text, /10\.0\.0\.0\/8/)
   assert.match(text, /HTTP 200/)
   assert.equal(findAll(tree, 'SettingsValueField').length, 0)
+  // A direct policy has no route or bypass list to report.
+  assert.match(text, /所有请求都直接连接/)
+})
+
+test('a failed install is reported as an error state, not as a working route', () => {
+  const state = readyState().state
+  const tree = loadBundle().__internals.renderNetworkPage(view({
+    remote: Object.assign({}, state, {
+      applied: null,
+      lastError: '找不到 @deepseek-ai/dsh-http-proxy，网络模式无法生效。',
+    }),
+  }))
+  const text = JSON.stringify(tree)
+  assert.match(text, /网络策略未能安装/)
+  assert.match(text, /找不到 @deepseek-ai\/dsh-http-proxy/)
+  // With nothing installed there is no route to show.
+  assert.equal(find(tree, 'dl'), undefined)
+})
+
+test('the bypass list is reported as a rule count, never as a wall of addresses', () => {
+  const state = readyState().state
+  const tree = loadBundle().__internals.renderNetworkPage(view({
+    remote: Object.assign({}, state, {
+      applied: {
+        mode: 'system',
+        direct: false,
+        summary: 'http://127.0.0.1:7897/',
+        noProxy: 'localhost,127.*,192.168.*,10.*,172.16.*',
+        at: 3,
+      },
+    }),
+  }))
+  const text = JSON.stringify(tree)
+  assert.match(text, /5 条规则/)
+  // The individual entries stay in the payload for the tooltip-free detail
+  // view; the rendered text must not repeat them one by one.
+  assert.equal(text.includes('localhost,127.*'), false)
 })
 
 test('the save button reports a failed save through the form state', () => {
