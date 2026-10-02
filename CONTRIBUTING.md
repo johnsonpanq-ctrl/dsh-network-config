@@ -8,7 +8,7 @@ tested, does it stay honest about what it cannot do".
 No build step and no dependencies:
 
 ```powershell
-git clone https://github.com/OWNER/dsh-network-config.git
+git clone https://github.com/johnsonpanq-ctrl/dsh-network-config.git
 cd dsh-network-config
 npm test
 ```
