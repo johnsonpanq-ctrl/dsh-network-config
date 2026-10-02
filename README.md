@@ -2,6 +2,8 @@
 
 **Proxy settings for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) — a Network page in Settings where you pick how the whole app reaches the internet, and it takes effect immediately.**
 
+> English | [中文](README.zh.md)
+
 ```
 Settings → Network
   ( ) Follow system     read the Windows system proxy and follow its on/off switch
@@ -71,8 +73,9 @@ on a private address, reachable directly in ~20 ms):
 elsewhere the plugin still works, but that mode falls back to reading the
 environment) and PowerShell.
 
-1. Download `dsh-network-config-1.0.0.zip` from
-   [Releases](../../releases) — or clone this repo.
+1. Download `dsh-network-config-1.0.0.zip` from the
+   [releases page](https://github.com/johnsonpanq-ctrl/dsh-network-config/releases)
+   — or clone this repo.
 2. Extract anywhere, then in that folder:
 
 ```powershell
