@@ -37,8 +37,8 @@
     "cordis.patch.yml"
   ],
   "scripts": {
-    "test": "node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs && node tools/check-encoding.mjs",
-    "lint:encoding": "node tools/check-encoding.mjs"
+    "test": "node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs && npm run check",
+    "check": "node tools/check-encoding.mjs && node tools/check-links.mjs"
   },
   "engines": {
     "node": ">=20"
