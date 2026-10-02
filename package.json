@@ -17,12 +17,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OWNER/dsh-network-config.git"
+    "url": "git+https://github.com/johnsonpanq-ctrl/dsh-network-config.git"
   },
   "bugs": {
-    "url": "https://github.com/OWNER/dsh-network-config/issues"
+    "url": "https://github.com/johnsonpanq-ctrl/dsh-network-config/issues"
   },
-  "homepage": "https://github.com/OWNER/dsh-network-config#readme",
+  "homepage": "https://github.com/johnsonpanq-ctrl/dsh-network-config#readme",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -37,7 +37,8 @@
     "cordis.patch.yml"
   ],
   "scripts": {
-    "test": "node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs"
+    "test": "node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs && node tools/check-encoding.mjs",
+    "lint:encoding": "node tools/check-encoding.mjs"
   },
   "engines": {
     "node": ">=20"

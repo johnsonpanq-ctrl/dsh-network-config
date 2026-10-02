@@ -22,6 +22,10 @@ jobs:
       - name: Run the unit tests
         run: node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs
 
+      - name: Check for corrupted text encodings
+        if: matrix.os == 'ubuntu-latest'
+        run: node tools/check-encoding.mjs
+
   powershell:
     # The installer and verifier are the part Windows users actually run; make
     # sure they at least parse under the Windows PowerShell that ships with the OS.
