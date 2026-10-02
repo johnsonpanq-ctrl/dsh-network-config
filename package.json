@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Proxy mode for DeepSeek Harness: follow the system proxy, connect directly, or point at your own proxy — from Settings, applied live.",
   "license": "MIT",
-  "author": "",
+  "author": {
+    "name": "johnsonpanq-ctrl",
+    "url": "https://github.com/johnsonpanq-ctrl"
+  },
   "keywords": [
     "deepseek",
     "deepseek-harness",
