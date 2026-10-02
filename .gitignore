@@ -1,0 +1,21 @@
+# Build output
+dist/
+
+# Dependencies (this package has none, but a contributor may install tooling)
+node_modules/
+
+# Local install scratch
+*.log
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Profile manifest backups written by install.ps1
+package.json.bak-*
