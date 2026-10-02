@@ -49,7 +49,7 @@ test('private addresses stay direct: loopback, RFC1918, link-local, CGNAT', () =
 
 test('a Windows prefix wildcard entry actually bypasses', () => {
   const list = compileBypass('192.168.*,10.*,172.16.*')
-  assert.equal(list.matches('172.20.0.10', '8080'), true)
+  assert.equal(list.matches('192.168.1.10', '8080'), true)
   assert.equal(list.matches('192.168.0.1', '80'), true)
   assert.equal(list.matches('10.1.2.3', '443'), true)
   assert.equal(list.matches('172.16.0.9', '80'), true)

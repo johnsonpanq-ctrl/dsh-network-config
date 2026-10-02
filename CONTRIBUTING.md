@@ -49,6 +49,16 @@ Three suites, all plain `node:test` — no test framework, no DOM, no network:
   parses as Chinese, so it survives review; this catches it mechanically.
 - `tools/check-links.mjs` — fails on a relative Markdown link whose target does
   not exist.
+- `tools/check-private-addresses.mjs` — fails on an IPv4 address outside the
+  reserved and documentation ranges. This is not pedantry: the first published
+  version of the READMEs contained the author's own LAN and overlay addresses,
+  because a "measured on a real machine" table is most convincing with the
+  addresses that were actually measured. Use the neutral members of the ranges
+  (`100.64.0.10`, `172.20.0.10`) in examples — not RFC 5737's documentation
+  blocks, which are public and would change what a test asserts.
+
+**Never publish an address, hostname, token, or port from your own machine** in a
+test, a README table, or a commit message. Redact first, then explain.
 
 **Please add a case with any behaviour change.** The bypass tests are written as
 "which destinations stay direct, and why" — a new entry form belongs there with the

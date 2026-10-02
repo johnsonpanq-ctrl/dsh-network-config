@@ -38,7 +38,7 @@
   ],
   "scripts": {
     "test": "node --test test/host.test.mjs test/client.test.mjs test/bypass.test.mjs && npm run check",
-    "check": "node tools/check-encoding.mjs && node tools/check-links.mjs"
+    "check": "node tools/check-encoding.mjs && node tools/check-links.mjs && node tools/check-private-addresses.mjs"
   },
   "engines": {
     "node": ">=20"

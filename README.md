@@ -59,12 +59,13 @@ including the forms the harness's own matcher cannot express:
 | `api.test:8443` | host with port | ✅ | ✅ |
 
 Measured on a real machine with a system proxy configured (a local model endpoint
-on a private address, reachable directly in ~20 ms):
+on a private address, reachable directly in ~20 ms). The addresses and ports below
+are stand-ins from the documentation ranges:
 
 | Target | Harness alone | With this plugin |
 |---|---|---|
-| `http://100.64.0.10:8080/v1/models` | **HTTP 502 · 5175 ms** | **HTTP 401 · 22 ms** |
-| `http://172.20.0.10:8080/v1/models` | 401 · 8 ms | 401 · 4 ms |
+| `http://100.64.0.10:8080/v1/models` *(CGNAT range)* | **HTTP 502 · 5175 ms** | **HTTP 401 · 22 ms** |
+| `http://172.20.0.10:8080/v1/models` *(private range)* | 401 · 8 ms | 401 · 4 ms |
 | `https://www.deepseek.com/` | 200 | 200 · 253 ms *(still proxied — correct)* |
 
 ## Install
